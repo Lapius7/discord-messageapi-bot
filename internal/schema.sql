@@ -1,0 +1,61 @@
+-- DB 作成とユーザー作成は deploy/setup.sh が行う。ここはテーブルのみ。
+CREATE TABLE IF NOT EXISTS channels (
+  channel_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  guild_id BIGINT UNSIGNED NOT NULL,
+  connected_by BIGINT UNSIGNED NOT NULL,
+  oldest_id BIGINT UNSIGNED NULL,
+  newest_id BIGINT UNSIGNED NULL,
+  backfill_done TINYINT(1) NOT NULL DEFAULT 0,
+  last_sync_at DATETIME NULL,
+  created_at DATETIME NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS api_keys (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  channel_id BIGINT UNSIGNED NOT NULL,
+  key_hash CHAR(64) NOT NULL UNIQUE,
+  key_prefix VARCHAR(12) NOT NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL,
+  INDEX (channel_id),
+  FOREIGN KEY (channel_id) REFERENCES channels(channel_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  channel_id BIGINT UNSIGNED NOT NULL,
+  author_id BIGINT UNSIGNED NOT NULL,
+  author_name VARCHAR(100) NOT NULL,
+  content MEDIUMTEXT NOT NULL,
+  posted_at DATETIME(3) NOT NULL,
+  edited_at DATETIME(3) NULL,
+  stored_at DATETIME NOT NULL,
+  INDEX (channel_id, id),
+  INDEX (stored_at),
+  FOREIGN KEY (channel_id) REFERENCES channels(channel_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS attachments (
+  id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  message_id BIGINT UNSIGNED NOT NULL,
+  channel_id BIGINT UNSIGNED NOT NULL,
+  ext VARCHAR(4) NULL,
+  size INT UNSIGNED NULL,
+  sha256 CHAR(64) NULL,
+  orig_name VARCHAR(255) NOT NULL,
+  stored_at DATETIME NULL,
+  INDEX (message_id),
+  INDEX (channel_id),
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  at DATETIME NOT NULL,
+  actor VARCHAR(40) NOT NULL,
+  action VARCHAR(40) NOT NULL,
+  channel_id BIGINT UNSIGNED NULL,
+  INDEX (at)
+) ENGINE=InnoDB;

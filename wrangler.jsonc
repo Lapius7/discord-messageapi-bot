@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "discord-messageapi-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": false,
+  "routes": [{ "pattern": "discord-messageapi-bot.wks.lapius7.com", "custom_domain": true }],
+  // 取り込みと突き合わせを 1 時間ごとに進める
+  "triggers": { "crons": ["*/10 * * * *"] },
+  "ratelimits": [
+    { "name": "KEY_LIMITER", "namespace_id": "2001", "simple": { "limit": 60, "period": 60 } },
+    { "name": "IP_LIMITER", "namespace_id": "2002", "simple": { "limit": 120, "period": 60 } }
+  ],
+  "vars": {
+    // サーバー側 API のホスト名。末尾スラッシュなし
+    "INTERNAL_URL": "https://dcm-internal.lapius7.com",
+    "CRON_SUBREQUESTS": "45",
+    "ADMIN_USER_ID": "894035401952595972",
+    "KEY_TTL_DAYS": "30",
+    "RECONCILE_DAYS": "7"
+  }
+  // シークレット(wrangler secret): DISCORD_PUBLIC_KEY, DISCORD_BOT_TOKEN, DISCORD_APP_ID, INTERNAL_SECRET
+}
